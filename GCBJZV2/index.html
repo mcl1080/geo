@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geo-Connections</title>
+    <style>
+        :root {
+            --bg: #fff; --text: #000;
+            --item: #efefef; --selected: #5a5a5a; --selected-text: #fff;
+        }
+        body { font-family: 'Helvetica Neue', Arial, sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; max-width: 100%; margin: 0; background-color: var(--bg); color: var(--text); }
+        
+        h1 { margin-bottom: 5px; }
+        p { color: #666; margin-top: 0; }
+
+        .game-container { max-width: 600px; width: 100%; }
+        
+        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
+        
+        .card { 
+            background: var(--item); padding: 10px 5px; text-align: center; 
+            font-weight: bold; text-transform: uppercase; font-size: 0.8rem; 
+            cursor: pointer; border-radius: 6px; user-select: none; min-height: 60px; 
+            display: flex; align-items: center; justify-content: center; word-break: break-word;
+            transition: transform 0.1s; border: 2px solid transparent;
+        }
+        @media (min-width: 500px) { .card { font-size: 1rem; padding: 20px 10px; } }
+        
+        .card.selected { background: var(--selected); color: var(--selected-text); }
+        
+        .solved-row { 
+            grid-column: span 4; padding: 15px; border-radius: 6px; text-align: center; 
+            display: flex; flex-direction: column; animation: popIn 0.3s; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 5px;
+        }
+        .solved-title { font-weight: bold; margin-bottom: 5px; font-size: 1.1em;}
+        
+        .controls { display: flex; gap: 10px; justify-content: center; margin-top: 20px;}
+        button { 
+            padding: 12px 24px; border-radius: 30px; border: 1px solid #000; 
+            background: #fff; cursor: pointer; font-weight: bold; font-size: 0.9rem;
+        }
+        button:hover { background: #f0f0f0; }
+        button:disabled { opacity: 0.5; cursor: default; }
+        #submit-btn { background: #000; color: #fff; border: 1px solid #000; }
+        
+        #message { height: 20px; text-align: center; font-weight: bold; margin: 10px 0; color: #333; }
+        
+        .shake { animation: shake 0.5s; }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25%, 75% { transform: translateX(-5px); } 50% { transform: translateX(5px); } }
+        @keyframes popIn { 0% { opacity:0; transform:scale(0.95); } 100% { opacity:1; transform:scale(1); } }
+        .spinner { display: inline-block; width: 10px; height: 10px; border: 2px solid #fff; border-radius: 50%; border-top-color: transparent; animation: spin 1s linear infinite; margin-left: 8px;}
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        #modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.85); flex-direction: column; align-items: center; justify-content: center; z-index: 100; text-align: center;}
+        #final-msg { 
+            background: #f4f4f4; padding: 25px; border-radius: 10px; 
+            font-family: monospace; font-size: 1.3rem; margin-top: 20px; 
+            max-width: 85%; word-break: break-word; border: 2px solid #333;
+        }
+        .icon { font-size: 4rem; margin-bottom: 20px; }
+        
+        .modal-buttons { margin-top: 20px; }
+        #reset-btn { background: #fff; color: #333; border: 2px solid #333; }
+        #reset-btn:hover { background: #333; color: #fff; }
+    </style>
+</head>
+<body>
+
+    <div class="game-container">
+        <h1>Geo-Connections <a href="https://coord.info/GCBJZV2" target="_blank">GCBJZV2</a></h1>
+        <p>Sort the 16 words into 4 categories.</p>
+        
+        <div id="message"></div>
+        
+        <div class="grid" id="grid">
+            <!-- Grid items injected by JS -->
+        </div>
+
+        <div class="controls">
+            <button onclick="shuffle()">Shuffle</button>
+            <button onclick="deselectAll()">Deselect All</button>
+            <button id="submit-btn" onclick="submitGuess()" disabled>Submit</button>
+        </div>
+    </div>
+
+    <div id="modal">
+        <div class="icon">📍</div>
+        <h2>Puzzle Solved...?</h2>
+        <div id="final-msg"></div>
+        <div class="modal-buttons">
+            <button id="reset-btn" onclick="location.reload()">Reset Puzzle</button>
+        </div>
+    </div>
+
+<script>
+    // =========================================================
+    // 🧩 PUZZLE DATA SECTION
+    // =========================================================
+    
+    /* --- PASTE YOUR GENERATED CODE BELOW THIS LINE --- */
+
+    const CONFIG = {
+    rows: [{"hash":925235130,"encName":"1f7e668348bba37658bb4aea","color":"#f9df6d"},{"hash":137609322,"encName":"44a8a5fb6744","color":"#a0c35a"},{"hash":3711389058,"encName":"5387e040b404dd220ba3","color":"#b0c4ef"},{"hash":1139205356,"encName":"5a0bb6bf","color":"#ba81c5"}],
+    cols: [{"hash":661092131,"encName":"5de0f5b0d84ac42369bac32eb8","color":"#f9df6d"},{"hash":862584698,"encName":"44676f2a5e4ce6c41b5d690d2025","color":"#a0c35a"},{"hash":112925109,"encName":"f69049976ae97ef032ae52f47efc64d69675","color":"#b0c4ef"},{"hash":2228039043,"encName":"6827fd67c4181d97c07f4a57a9a2","color":"#ba81c5"}],
+    words: ["SHELL","PINECONE","BIRDHOUSE","KEYCHAIN","TOY","CAMPFIRE","PHONE","DRONE","PEN","SKI","BUTTON","TREE","MULTITOOL","GUM","STONE","LADDER"],
+    msgRows: "9c2b1ef91533c6cd5aa885c75e348bdb",
+    msgCols: "d826e13b3da220869181a07cb13d2bb3"
+};
+
+    /* ----------------------------------------------------- */
+
+    
+    // =========================================================
+    // ⚙️ GAME ENGINE
+    // =========================================================
+
+    const WORK_FACTOR = 50000; 
+
+    function slowHash(str) {
+        let h = 0xdeadbeef;
+        for(let k=0; k < WORK_FACTOR; k++) {
+            for(let i=0; i<str.length; i++) {
+                h = Math.imul(h ^ str.charCodeAt(i), 2654435761);
+                h = ((h << 13) | (h >>> 19));
+            }
+        }
+        return ((h ^ h >>> 16) >>> 0);
+    }
+
+    function encryptDecrypt(text, passPhrase) {
+        let seed = slowHash(passPhrase);
+        let result = "";
+        for(let i=0; i<text.length; i++) {
+            seed = (1664525 * seed + 1013904223) & 0xFFFFFFFF;
+            let keyByte = (seed >>> 24) & 0xFF; 
+            let charCode = text.charCodeAt(i) ^ keyByte;
+            result += String.fromCharCode(charCode);
+        }
+        return result;
+    }
+
+    function hexToStr(hex) {
+        let str = "";
+        for(let i=0; i<hex.length; i+=2) str += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
+        return str;
+    }
+
+    let items = [];
+    let selected = [];
+    let solvedGroups = 0;
+    let recoveredCategoryNames = [];
+    let activePath = null; 
+
+    function init() {
+        if(!CONFIG) {
+            document.body.innerHTML = "<h2 style='text-align:center;'>⚠️ Config Missing</h2><p style='text-align:center'>Please paste the generated code.</p>";
+            return;
+        }
+
+        const grid = document.getElementById('grid');
+        items = CONFIG.words.map((w, i) => ({ word: w, id: i, element: null }));
+        
+        items.forEach(item => {
+            const el = document.createElement('div');
+            el.className = 'card';
+            el.innerText = item.word;
+            el.onclick = () => toggle(item);
+            item.element = el;
+            grid.appendChild(el);
+        });
+
+        shuffle();
+    }
+
+    function toggle(item) {
+        if(document.getElementById('submit-btn').innerHTML.includes("...")) return; 
+        
+        const idx = selected.indexOf(item);
+        if(idx > -1) {
+            selected.splice(idx, 1);
+            item.element.classList.remove('selected');
+        } else {
+            if(selected.length < 4) {
+                selected.push(item);
+                item.element.classList.add('selected');
+            }
+        }
+        document.getElementById('submit-btn').disabled = (selected.length !== 4);
+    }
+
+    function deselectAll() {
+        if(document.getElementById('submit-btn').innerHTML.includes("...")) return;
+        selected.forEach(s => s.element.classList.remove('selected'));
+        selected = [];
+        document.getElementById('submit-btn').disabled = true;
+    }
+
+    function shuffle() {
+        const grid = document.getElementById('grid');
+        // Convert to array
+        const cards = Array.from(grid.querySelectorAll('.card'));
+        
+        // Fisher-Yates Shuffle Algorithm (Randomly swaps elements in the array)
+        for (let i = cards.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [cards[i], cards[j]] = [cards[j], cards[i]];
+        }
+
+        // Re-append to DOM in new order
+        cards.forEach(card => grid.appendChild(card));
+    }
+
+    function submitGuess() {
+        if(selected.length !== 4) return;
+        
+        const btn = document.getElementById('submit-btn');
+        const originalText = btn.innerText;
+        btn.innerHTML = 'Checking <span class="spinner"></span>';
+        btn.disabled = true;
+
+        setTimeout(() => {
+            processGuess(btn, originalText);
+        }, 50);
+    }
+
+    function processGuess(btn, originalText) {
+        const guessWords = selected.map(s => s.word).sort();
+        const guessString = guessWords.join(""); 
+        const guessHash = slowHash(guessString);
+        
+        let match = null;
+        let matchType = null;
+
+        if (activePath === null || activePath === 'rows') {
+            match = CONFIG.rows.find(g => g.hash === guessHash);
+            if(match) matchType = 'rows';
+        }
+
+        if (!match && (activePath === null || activePath === 'cols')) {
+            match = CONFIG.cols.find(g => g.hash === guessHash);
+            if(match) matchType = 'cols';
+        }
+
+        if(match) {
+            if(activePath === null) activePath = matchType;
+
+            const encNameStr = hexToStr(match.encName);
+            const catName = encryptDecrypt(encNameStr, guessString);
+            recoveredCategoryNames.push(catName);
+
+            const grid = document.getElementById('grid');
+            const row = document.createElement('div');
+            row.className = 'solved-row';
+            row.style.backgroundColor = match.color;
+            row.innerHTML = `<div class="solved-title">${catName}</div><div>${guessWords.join(", ")}</div>`;
+            grid.prepend(row);
+
+            selected.forEach(s => s.element.remove());
+            selected = [];
+            solvedGroups++;
+
+            if(solvedGroups === 4) winGame();
+
+        } else {
+            selected.forEach(s => s.element.classList.add('shake'));
+            document.getElementById('message').innerText = "Not quite...";
+            setTimeout(() => {
+                selected.forEach(s => s.element.classList.remove('shake'));
+                document.getElementById('message').innerText = "";
+            }, 500);
+        }
+        
+        btn.innerHTML = originalText;
+        btn.disabled = (selected.length !== 4); 
+    }
+
+    function winGame() {
+        setTimeout(() => {
+            const modal = document.getElementById('modal');
+            const msgBox = document.getElementById('final-msg');
+            
+            recoveredCategoryNames.sort();
+            const masterKey = recoveredCategoryNames.join("");
+            
+            try {
+                const targetMsg = (activePath === 'rows') ? CONFIG.msgRows : CONFIG.msgCols;
+                const encMsgStr = hexToStr(targetMsg);
+                const secret = encryptDecrypt(encMsgStr, masterKey);
+                msgBox.innerText = secret;
+            } catch(e) {
+                msgBox.innerText = "Error decoding message.";
+            }
+            modal.style.display = 'flex';
+        }, 1000);
+    }
+
+    init();
+
+</script>
+</body>
+</html>
