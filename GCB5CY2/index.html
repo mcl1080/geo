@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GCB5CY2</title>
+    <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css">
+    <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
+    <style>
+        body { font-family: monospace; background-color: #f0f0f0; color: #333; margin: 0; padding: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        #game-container { width: 95%; max-width: 800px; margin-top: 20px; }
+        h1 { text-align: center; color: #444; margin-bottom: 10px; }
+        #output-container {
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            border: 1px solid #ccc;
+            padding: 15px;
+            height: 70vh;
+            overflow-y: scroll;
+            box-sizing: border-box;
+            white-space: pre-wrap;
+            line-height: 1.4;
+            margin-bottom: 10px;
+        }
+        #output { /* Content will be pre-wrap from parent */ }
+        #input-area {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        #commandInput {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            margin-right: 5px;
+            background-color: #fff;
+            color: #333;
+            font-family: monospace;
+        }
+        #submitCommand {
+            padding: 10px 15px;
+            border: 1px solid #ccc;
+            background-color: #e0e0e0;
+            cursor: pointer;
+            font-family: monospace;
+        }
+        #submitCommand:hover {
+            background-color: #d0d0d0;
+        }
+        #submitCommand:disabled {
+            background-color: #f0f0f0;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <h1>GCB5CY2 - Liar's Labyrinth</h1>
+        <div id="output-container">
+            <div id="output"></div>
+        </div>
+        <div id="input-area">
+            <input type="text" id="commandInput" placeholder="Type command...">
+            <button id="submitCommand">Send</button>
+        </div>
+    </div>
+
+    <py-config>
+        packages = ["asyncio"]
+         [[fetch]]
+      files = [
+          "./game_min.py"
+        ]
+    </py-config>
+
+    <!-- Link to your modified Game.py file -->
+    <py-script src="./game_min.py"></py-script>
+
+    <script type="py">
+# This Python code runs after Game.py is loaded and DOM is ready.
+import asyncio
+from js import document, console
+from pyodide.ffi import create_proxy
+
+from game_min import initialize_game_environment, handle_command_submission
+
+async def main(): # Wrap initialization in an async function
+    console.log("Attempting to get DOM elements...")
+    # Get HTML elements
+    output_div = document.getElementById("output")
+    output_container_div = document.getElementById("output-container") # ADDED
+    input_field = document.getElementById("commandInput")
+    submit_button = document.getElementById("submitCommand")
+
+    # --- Add logging to check if elements are found ---
+    if not output_div:
+        console.error("ERROR: output_div not found!")
+    else:
+        console.log("output_div found:", output_div)
+
+    # ADDED: Logging for output_container_div
+    if not output_container_div:
+        console.error("ERROR: output_container_div not found!")
+    else:
+        console.log("output_container_div found:", output_container_div)
+
+    if not input_field:
+        console.error("ERROR: input_field not found!")
+    else:
+        console.log("input_field found:", input_field)
+
+    if not submit_button:
+        console.error("ERROR: submit_button not found!")
+    else:
+        console.log("submit_button found:", submit_button)
+
+    # MODIFIED: Check for output_container_div as well
+    if not (output_div and output_container_div and input_field and submit_button):
+        console.error("CRITICAL: One or more essential DOM elements not found. Game cannot start.")
+        if output_div:
+            output_div.innerHTML = "Error: Could not initialize game UI. Please check console."
+        return
+    # --- End of logging ---
+
+    # MODIFIED: Pass output_container_div to initialize_game_environment
+    await initialize_game_environment(output_div, output_container_div, input_field, submit_button)
+
+    # Define Python event handlers
+    def on_submit_click_py(event):
+        console.log("Submit button clicked (Python)")
+        asyncio.ensure_future(handle_command_submission())
+
+    def on_input_keypress_py(event):
+        if event.key == "Enter":
+            console.log("Enter key pressed (Python)")
+            asyncio.ensure_future(handle_command_submission())
+
+    proxied_on_submit_click = create_proxy(on_submit_click_py)
+    proxied_on_input_keypress = create_proxy(on_input_keypress_py)
+
+    submit_button.addEventListener("click", proxied_on_submit_click)
+    input_field.addEventListener("keypress", proxied_on_input_keypress)
+
+    console.log("Game setup complete in index.html.")
+
+# Run the main async setup function
+asyncio.ensure_future(main())
+    </script>
+<div style="text-align: center;">
+    <a href="./grid.pdf" target="_blank" rel="noopener noreferrer">Download Grid PDF</a>
+</div>
+</body>
+</html>
