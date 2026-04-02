@@ -221,10 +221,10 @@
       <h1>Geocache Field-Key Decoder</h1>
       <div class="subtitle">
         Paste the encrypted payload from the cache page, enter the passphrase you found in the field,
-        and reveal the hidden message locally in your browser.
+        and reveal the hidden message in your browser.
       </div>
       <div class="callout">
-        <strong>Finder workflow:</strong> get the field key first, then come back here with the encrypted payload from the listing and unlock the clue offline.
+        <strong>Finder workflow:</strong> get the field key first, then come back here with the encrypted payload from the listing and unlock the clue.
       </div>
     </section>
 
@@ -267,16 +267,12 @@
         <strong>Real crypto</strong>
         <span>The message is unlocked with AES-GCM after deriving the key from the passphrase using PBKDF2-SHA-256.</span>
       </div>
-      <div class="mini-card">
-        <strong>Why offline matters</strong>
-        <span>This works without internet access once the file is saved locally, making it useful for cache solving in the field.</span>
-      </div>
     </section>
 
     <div id="status" class="status">Ready.</div>
 
     <div class="foot">
-      This page is self-contained and offline. No external libraries, no network calls, and no data leaves the browser.
+      This page is self-contained. No external libraries, no network calls, and no data leaves the browser.
     </div>
   </div>
 
